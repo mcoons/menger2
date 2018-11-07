@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>Babylon - Getting Started</title>
+    <!--- Link to the last version of BabylonJS --->
+    <script src="babylon.js"></script>
+    <script src="object.js"></script>
+    <style>
+        html, body {
+            overflow: hidden;
+            width   : 100%;
+            height  : 100%;
+            margin  : 0;
+            padding : 0;
+        }
+
+        #renderCanvas {
+            width   : 100%;
+            height  : 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+
+
+        window.addEventListener('DOMContentLoaded', function(){
+            // get the canvas DOM element
+            var canvas = document.getElementById('renderCanvas');
+
+            // load the 3D engine
+            var engine = new BABYLON.Engine(canvas, true);
+
+            // createScene function that creates and return the scene
+            var createScene = function(){
+
+                // create a basic BJS Scene object
+                var scene = new BABYLON.Scene(engine);
+
+                var assetsManager = new BABYLON.AssetsManager(scene);
+
+
+
+                // myMaterial.diffuseTexture = new BABYLON.Texture("./tiled1.png", scene);
+                // mat1.diffuseTexture = new BABYLON.Texture("./metal1/Metal_Grill_001_COLOR.jpg", scene);
+
+
+
+
+                // create a FreeCamera, and set its position to (x:0, y:5, z:-10)
+                camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 0, -200), scene);
+
+                // target the camera to scene origin
+                camera.setTarget(new BABYLON.Vector3(0,0,0));
+
+                // attach the camera to the canvas
+                camera.attachControl(canvas, false);
+
+                // create basic lights, aiming 0,1,0 - meaning, to the sky
+                var hlight3 = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,1), scene);
+
+                hlight3.intensity = .3;
+
+                var plight1 = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(5600, 600, 5600), scene);
+                var plight2 = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(-5600, -5600, -5600), scene);
+                var plight3 = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(5600, 5600, 0), scene);
+
+                plight1.intensity = .5;
+                plight2.intensity = .4;
+                plight3.intensity = .3;
+
+                // plight1.diffuse = new BABYLON.Color3(1, .5, .5);
+                // plight2.diffuse = new BABYLON.Color3(.5, 1, .5);
+                // plight3.diffuse = new BABYLON.Color3(.2, .2, 1);
+
+                var greenMat = new BABYLON.StandardMaterial("green", scene);
+                greenMat.diffuseColor = BABYLON.Color3.Blue();
+
+                var mat1 = new BABYLON.StandardMaterial("mat1", scene);
+
+
+
+                var myMaterial = new BABYLON.StandardMaterial("myMaterial", scene);
+
+
+                var myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 100, height: 100}, scene);
+
+
+                var textureTask = assetsManager.addTextureTask("image task", "tiled1.png");
+
+                textureTask.onError = function (task, message, exception) {
+                    console.log(message, exception);
+                }
+
+
+                textureTask.onSuccess = function(task) {
+
+                    console.log("successful texture load")
+                    mymaterial.diffuseTexture = new BABYLON.Texture(task.texture, scene);
+                    myMaterial.backFaceCulling = false;
+                    myMaterial.diffuseTexture.hasAlpha = true;
+                    myPlane.material = myMaterial;
+
+                }
+
+                myPlane.material = myMaterial;
+
+                assetsManager.onFinish = function (tasks) {
+              		engine.runRenderLoop(function () {
+              			scene.render();
+              		});
+              	};
+
+              	assetsManager.load();
+            }
+
+            // call the createScene function
+            var scene = createScene();
+
+            // run the render loop
+            // engine.runRenderLoop(function(){
+            //     // camera.position.z +=.2*direction;
+            //     // if (camera.position.z > 420) { direction*=-1; camera.position.z = 420; }
+            //     // if (camera.position.z < -200) { direction*=-1; camera.position.z = -200; }
+            //     scene.render();
+            // });
+
+            // the canvas/window resize event handler
+            window.addEventListener('resize', function(){
+                engine.resize();
+            });
+        });
+
+
+    </script>
+</body>
+</html>
