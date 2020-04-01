@@ -53,7 +53,7 @@
                 var scene = new BABYLON.Scene(engine);
 
                 // create a FreeCamera, and set its position to (x:0, y:5, z:-10)
-                camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 100, -600), scene);
+                camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 100, 0), scene);
 
                 // target the camera to scene origin
                 camera.setTarget(new BABYLON.Vector3(0,-100,0));
@@ -109,7 +109,7 @@
                 var cubeCSG = BABYLON.CSG.FromMesh(bigCube);
 
                 // Create initial sponge to use as a 'block' template.  This seems to help increase complexity.
-                maxInterval = 4;
+                maxInterval = 5;
                 console.log("ready to calculate crosses")
                 calculateCrosses(new BABYLON.Vector3(0,0,0), 1);
                 console.log("total crosses to remove",removed.length);
