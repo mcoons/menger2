@@ -109,7 +109,7 @@
                 var cubeCSG = BABYLON.CSG.FromMesh(bigCube);
 
                 // Create initial sponge to use as a 'block' template.  This seems to help increase complexity.
-                maxInterval = 3;
+                maxInterval = 4;
                 console.log("ready to calculate crosses")
                 calculateCrosses(new BABYLON.Vector3(0,0,0), 1);
                 console.log("total crosses to remove",removed.length);
