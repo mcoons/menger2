@@ -133,12 +133,12 @@
 
                 template = template.toMesh("csg", new BABYLON.StandardMaterial("mat", scene), scene);
 
-                var serializedMesh = BABYLON.SceneSerializer.SerializeMesh(template);
-                var strMesh = JSON.stringify(serializedMesh);
-                console.log(strMesh);
+  //              var serializedMesh = BABYLON.SceneSerializer.SerializeMesh(template);
+  //              var strMesh = JSON.stringify(serializedMesh);
+  //              console.log(strMesh);
 
-                console.log("template object:")
-                console.log(template);
+   //             console.log("template object:")
+   //             console.log(template);
 
                 template.material.backFaceCulling = false;
                 var matrix = BABYLON.Matrix.Scaling(1/243, 1/243, 1/243);
