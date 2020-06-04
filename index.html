@@ -26,9 +26,9 @@
     <canvas id="renderCanvas"></canvas>
     <script>
 
-        console.log(objectJSON);
-        var testobj = JSON.parse(objectJSON);
-        console.log(testobj);
+        // console.log(objectJSON);
+        // var testobj = JSON.parse(objectJSON);
+        // console.log(testobj);
 
         var maxInterval;  // not to exceed 6
         const remove = [22, 16, 14, 13, 12, 10, 4];
@@ -53,10 +53,10 @@
                 var scene = new BABYLON.Scene(engine);
 
                 // create a FreeCamera, and set its position to (x:0, y:5, z:-10)
-                camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 100, 0), scene);
+                camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 0, -450), scene);
 
                 // target the camera to scene origin
-                camera.setTarget(new BABYLON.Vector3(0,-100,0));
+                camera.setTarget(new BABYLON.Vector3(0,0,0));
 
                 // attach the camera to the canvas
                 camera.attachControl(canvas, false);
@@ -101,7 +101,7 @@
 
                 var matrix = BABYLON.Matrix.Scaling(1/3, 1/3, 1/3);
                 mergedBoxes.bakeTransformIntoVertices(matrix);
-                console.log("created merged box");
+                // console.log("created merged box");
 
                 // console.log(crosses);
 
@@ -109,10 +109,10 @@
                 var cubeCSG = BABYLON.CSG.FromMesh(bigCube);
 
                 // Create initial sponge to use as a 'block' template.  This seems to help increase complexity.
-                maxInterval = 5;
-                console.log("ready to calculate crosses")
+                maxInterval = 3;
+                // console.log("ready to calculate crosses")
                 calculateCrosses(new BABYLON.Vector3(0,0,0), 1);
-                console.log("total crosses to remove",removed.length);
+                // console.log("total crosses to remove",removed.length);
                 let cross = mergedBoxes.clone("clone");  // CSG object
                 removed.forEach(c => {
                     cross.position = c.p;
@@ -120,7 +120,7 @@
                     crossCSG = BABYLON.CSG.FromMesh(cross);
                     cubeCSG = cubeCSG.subtract(crossCSG);
 
-                    console.log("removed crosses");
+                    // console.log("removed crosses");
                 })
                     cross.dispose();
 
@@ -147,9 +147,9 @@
                 //template = BABYLON.Mesh.MergeMeshes(initialMeshes, true, true);
                 // template.position = new BABYLON.Vector3(0,0,0);
 
-                console.log("ready to create final sponge");
+                // console.log("ready to create final sponge");
                 // Create the final sponge using the previous template as the 'block'
-                maxInterval = 4;
+                maxInterval = 3;
                 calculateCenters(new BABYLON.Vector3(0,0,0), 1, scene, mat1, false);
 
                 mergedBoxes.dispose();
@@ -200,7 +200,7 @@
                     if (count === 13){
                         let p = new BABYLON.Vector3(x,y,z);
                        removed.push({p, myScale});
-                       console.log("calculated cross")
+                    //    console.log("calculated cross")
                     }
                 }
                 count++;

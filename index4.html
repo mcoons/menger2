@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <title>CSG Menger</title>
+    <!--- Link to the last version of BabylonJS --->
+    <script src="babylon.js"></script>
+    <script src="object.js"></script>
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        //console.log(objectJSON);
+        var testobj = JSON.parse(objectJSON);
+        //console.log(testobj);
+
+        var maxInterval; // not to exceed 6
+        const remove = [22, 16, 14, 13, 12, 10, 4];
+        const scales = [243, 81, 27, 9, 3, 1, 1 / 3, 1 / 9];
+
+        var template;
+        var camera;
+        var direction = 1;
+        var removed = [];
+        var crosses = [];
+
+        var scene;
+        var mat1;
+        var engine;
+        var canvas;
+
+        window.addEventListener('DOMContentLoaded', function () {
+            // get the canvas DOM element
+            canvas = document.getElementById('renderCanvas');
+
+            // load the 3D engine
+            engine = new BABYLON.Engine(canvas, true);
+
+            // call the createScene function
+            scene = createScene();
+
+            createSponge();
+
+            // run the render loop
+            engine.runRenderLoop(function () {
+                scene.render();
+            });
+
+            // the canvas/window resize event handler
+            window.addEventListener('resize', function () {
+                engine.resize();
+            });
+        });
+
+
+        // Create and return the scene
+        function createScene() {
+            // create a basic BJS Scene object
+            scene = new BABYLON.Scene(engine);
+
+            // create a FreeCamera, and set its position to (x:0, y:5, z:-10)
+            camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 0, 0), scene);
+
+            // target the camera to scene origin
+            camera.setTarget(new BABYLON.Vector3(0, 0, 0));
+
+            // attach the camera to the canvas
+            camera.attachControl(canvas, false);
+
+            // create basic lights, aiming 0,1,0 - meaning, to the sky
+            var hlight3 = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 1, 1), scene);
+
+            hlight3.intensity = .3;
+
+            var plight1 = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(5600, 600, 5600),
+                scene);
+            var plight2 = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(-5600, -5600, -5600),
+                scene);
+            var plight3 = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(5600, 5600, 0),
+                scene);
+
+            plight1.intensity = .5;
+            plight2.intensity = .4;
+            plight3.intensity = .3;
+
+            // plight1.diffuse = new BABYLON.Color3(1, .5, .5);
+            // plight2.diffuse = new BABYLON.Color3(.5, 1, .5);
+            // plight3.diffuse = new BABYLON.Color3(.2, .2, 1);
+
+            var greenMat = new BABYLON.StandardMaterial("green", scene);
+            greenMat.diffuseColor = BABYLON.Color3.Blue();
+
+            mat1 = new BABYLON.StandardMaterial("mat1", scene);
+
+            return scene;
+        }
+
+        // Create the menger sponge
+        function createSponge() {
+            let xbox = BABYLON.MeshBuilder.CreateBox("box", {
+                height: 1,
+                width: 3,
+                depth: 1
+            }, scene);
+            let ybox = BABYLON.MeshBuilder.CreateBox("box", {
+                height: 3,
+                width: 1,
+                depth: 1
+            }, scene);
+            let zbox = BABYLON.MeshBuilder.CreateBox("box", {
+                height: 1,
+                width: 1,
+                depth: 3
+            }, scene);
+
+            var xCSG = BABYLON.CSG.FromMesh(xbox);
+            var yCSG = BABYLON.CSG.FromMesh(ybox);
+            var zCSG = BABYLON.CSG.FromMesh(zbox);
+
+            var xyzCSG = xCSG.union(yCSG).union(zCSG);
+
+            let mergedBoxes = xyzCSG.toMesh("csg", new BABYLON.StandardMaterial("mat", scene), scene);
+
+            xbox.dispose();
+            ybox.dispose();
+            zbox.dispose();
+
+            var matrix = BABYLON.Matrix.Scaling(1 / 3, 1 / 3, 1 / 3);
+            mergedBoxes.bakeTransformIntoVertices(matrix);
+            console.log("created merged box");
+
+            // console.log(crosses);
+
+            let bigCube = BABYLON.MeshBuilder.CreateBox("box", {
+                height: 243,
+                width: 243,
+                depth: 243
+            }, scene);
+            var cubeCSG = BABYLON.CSG.FromMesh(bigCube);
+
+            // Create initial sponge to use as a 'block' template.  This seems to help increase complexity.
+            maxInterval = 3; // 4 = 421 crosses to be removed
+            console.log("ready to calculate crosses")
+            calculateCrosses(new BABYLON.Vector3(0, 0, 0), 1);
+            console.log("total crosses to remove", removed.length);
+            let cross = mergedBoxes.clone("clone"); // CSG object
+            removed.forEach(c => {
+                cross.position = c.p;
+                cross.scaling = new BABYLON.Vector3(c.myScale, c.myScale, c.myScale);
+                let crossCSG = BABYLON.CSG.FromMesh(cross);
+                cubeCSG = cubeCSG.subtract(crossCSG);
+
+                console.log("removed crosses");
+            })
+
+            cross.dispose();
+
+            template = cubeCSG;
+
+            // Disposing original meshes since we don't want to see them on the scene
+            bigCube.dispose();
+
+            template = template.toMesh("csg", new BABYLON.StandardMaterial("mat", scene), scene);
+
+            var serializedMesh = BABYLON.SceneSerializer.SerializeMesh(template);
+            var strMesh = JSON.stringify(serializedMesh);
+            console.log(strMesh);
+
+            console.log("template object:")
+            console.log(template);
+
+            template.material.backFaceCulling = false;
+            var matrix = BABYLON.Matrix.Scaling(1 / 243, 1 / 243, 1 / 243);
+            template.bakeTransformIntoVertices(matrix);
+
+            console.log("ready to create final sponge");
+            // Create the final sponge using the previous template as the 'block'
+            maxInterval = 4; // 4 = 8000 clones
+            calculateCenters(new BABYLON.Vector3(0, 0, 0), 1, scene, mat1, false);
+
+            mergedBoxes.dispose();
+            template.dispose();
+        }
+
+        // Recursively calculate centers of crosses to remove
+        function calculateCrosses(center, interval) {
+            let myScale = scales[interval - 1];
+
+            // If complexity is reached then render the block or the clone template depending on initial run
+            if (interval === maxInterval) {
+                return;
+            }
+
+            // Get the scale for this interval
+            let s3 = scales[interval];
+            // Count is the location to determine the removal
+            let count = 0;
+
+            // Calculate the new block centers ignoring the central blocks
+            for (let y = center.y - s3; y <= center.y + s3; y += s3)
+                for (let z = center.z - s3; z <= center.z + s3; z += s3)
+                    for (let x = center.x - s3; x <= center.x + s3; x += s3) {
+                        if (!remove.includes(count)) {
+                            // Recurse using the new calculated centers unless they are the removed ones
+                            calculateCrosses(new BABYLON.Vector3(x, y, z), interval + 1);
+                        } else {
+                            if (count === 13) {
+                                let p = new BABYLON.Vector3(x, y, z);
+                                removed.push({
+                                    p,
+                                    myScale
+                                });
+                                console.log("calculated cross")
+                            }
+                        }
+                        count++;
+                    }
+        }
+
+        // Recursively calculate 27 centers of surrounding blocks
+        // Initial is true when building  the initial template
+        function calculateCenters(center, interval, scene, mat) {
+            let myScale = scales[interval - 1];
+            let box;
+
+            // If complexity is reached then render the clone template
+            if (interval === maxInterval) {
+                box = template.clone("clone");
+                box.scaling = new BABYLON.Vector3(myScale, myScale, myScale);
+                box.position = new BABYLON.Vector3(center.x, center.y, center.z);
+                let mat = new BABYLON.StandardMaterial("rand", scene);
+                mat.diffuseColor = new BABYLON.Color3(Math.random() / 5 + .9, Math.random() / 5 + .9, Math.random() /
+                    5 + .9);
+                mat.backFaceCulling = false;
+                box.material = mat;
+                console.log("cloned");
+                return;
+            }
+
+            // Get the scale for this interval
+            let s3 = scales[interval];
+            // Count is the location to determine the removal
+            let count = 0;
+
+            // Calculate the new block centers ignoring the central blocks
+            for (let y = center.y - s3; y <= center.y + s3; y += s3)
+                for (let z = center.z - s3; z <= center.z + s3; z += s3)
+                    for (let x = center.x - s3; x <= center.x + s3; x += s3) {
+                        if (!remove.includes(count)) {
+                            // Recurse using the new calculated centers unless they are the removed ones
+                            calculateCenters(new BABYLON.Vector3(x, y, z), interval + 1, scene, mat);
+                        }
+                        count++;
+                    }
+        }
+    
+    </script>
+</body>
+
+</html>
